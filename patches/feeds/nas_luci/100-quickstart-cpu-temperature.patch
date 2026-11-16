@@ -1,0 +1,113 @@
+diff --git a/luci/luci-app-quickstart/luasrc/controller/istore_backend.lua b/luci/luci-app-quickstart/luasrc/controller/istore_backend.lua
+--- a/luci/luci-app-quickstart/luasrc/controller/istore_backend.lua
++++ b/luci/luci-app-quickstart/luasrc/controller/istore_backend.lua
+@@ -106,6 +106,62 @@
+ 	end
+ end
+ 
++local function get_cpu_temperature()
++  local f = io.open("/sys/class/thermal/thermal_zone0/temp", "r")
++  if not f then
++    return nil
++  end
++
++  local v = f:read("*a")
++  f:close()
++
++  local n = tonumber((v or ""):match("%d+"))
++  if not n then
++    return nil
++  end
++
++  -- thermal_zone0/temp 通常是毫摄氏度，例如 50000 = 50.0
++  if n > 1000 then
++    n = n / 1000
++  end
++
++  -- 返回 JSON number，不带 °C
++  return math.floor(n * 10 + 0.5) / 10
++end
++
++local function is_status_request()
++  local uri = http.getenv("REQUEST_URI") or ""
++  uri = uri:gsub("%?.*$", "")
++  return uri:match("/istore/system/status/?$") ~= nil
++end
++
++local function patch_cpu_temperature(body)
++  if not body or body == "" then
++    return body
++  end
++
++  if body:find('"cpuTemperature"', 1, true) then
++    return body
++  end
++
++  local temp = get_cpu_temperature()
++  if temp == nil then
++    return body
++  end
++
++  local patched, n = body:gsub(
++    '("result"%s*:%s*{)',
++    '%1"cpuTemperature":' .. tostring(temp) .. ',',
++    1
++  )
++
++  if n and n > 0 then
++    return patched
++  end
++
++  return body
++end
++
+ function istore_backend() 
+   local sock = nixio.connect("127.0.0.1", ISTOREOS_PORT) 
+   if not sock then
+@@ -161,6 +217,7 @@
+   http.status(num, msg)
+ 
+   local chunked = 0
++  local response_content_length = nil
+   line = linesrc()
+   while line and line ~= "" do
+     local key, val = line:match("^([%w-]+)%s?:%s?(.*)")
+@@ -168,6 +225,11 @@
+       if key == "Transfer-Encoding" and val == "chunked" then
+         chunked = 1
+       end
++
++      if key == "Content-Length" then
++        response_content_length = tonumber(val)
++      end
++
+       if key ~= "Connection" and key ~= "Transfer-Encoding" and key ~= "Content-Length" then 
+         http.header(key, val)
+       end
+@@ -180,8 +242,24 @@
+     return
+   end
+ 
++  local body_buffer = linesrc(true) or ""
++
++  if is_status_request() and num == 200 then
++    local body = body_buffer
++
++    if chunked == 1 then
++      local t = {}
++      ltn12.pump.all(chunksource(sock, body_buffer), ltn12.sink.table(t))
++      body = table.concat(t)
++    else
++      if response_content_length and #body_buffer < response_content_length then
++        local remain = sock:recvall(response_content_length - #body_buffer)
++        body = body_buffer .. (remain or "")
++      end
++    end
++
++    http.write(patch_cpu_temperature(body))
++  elseif chunked == 1 then
+-  local body_buffer = linesrc(true)
+-  if chunked == 1 then
+     ltn12.pump.all(chunksource(sock, body_buffer), http.write)
+   else
+     local body_source = ltn12.source.cat(ltn12.source.string(body_buffer), sock:blocksource())

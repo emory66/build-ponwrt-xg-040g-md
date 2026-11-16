@@ -110,8 +110,8 @@ jobs:
     - name: Update feeds
       run: cd openwrt && ./scripts/feeds update -a
 
-    - name: Apply LuCI patches
-      run: ./scripts/apply-feed-patches.sh openwrt/feeds/luci
+    - name: Apply feed patches
+      run: ./scripts/apply-feed-patches.sh openwrt/feeds
 
     - name: Install feeds
       run: cd openwrt && ./scripts/feeds install -a
