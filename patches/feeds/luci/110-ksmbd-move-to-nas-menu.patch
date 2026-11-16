@@ -1,0 +1,11 @@
+diff --git a/applications/luci-app-ksmbd/root/usr/share/luci/menu.d/luci-app-ksmbd.json b/applications/luci-app-ksmbd/root/usr/share/luci/menu.d/luci-app-ksmbd.json
+index 17677a5de7..2327ce006f 100644
+--- a/applications/luci-app-ksmbd/root/usr/share/luci/menu.d/luci-app-ksmbd.json
++++ b/applications/luci-app-ksmbd/root/usr/share/luci/menu.d/luci-app-ksmbd.json
+@@ -1,5 +1,5 @@
+ {
+-	"admin/services/ksmbd": {
++	"admin/nas/ksmbd": {
+ 		"title": "Network Shares",
+ 		"action": {
+ 			"type": "view",
