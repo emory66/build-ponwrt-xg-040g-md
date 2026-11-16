@@ -19,6 +19,48 @@
 # Modify hostname
 #sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
 
+# Fetch extra packages into the OpenWrt package tree before make defconfig.
+# These are source packages; firmware inclusion remains controlled by .config.
+CUSTOM_PACKAGE_DIR=package/custom
+mkdir -p "$CUSTOM_PACKAGE_DIR"
+
+add_custom_package() {
+    local name="$1" repo="$2" branch="$3" subdir="${4:-.}"
+    local tmp src dest="$CUSTOM_PACKAGE_DIR/$name"
+
+    if [ -e "$dest" ]; then
+        [ -f "$dest/Makefile" ] || { echo "Invalid package directory: $dest" >&2; return 1; }
+        echo "Package $name already exists, skipping"
+        return 0
+    fi
+
+    tmp="$(mktemp -d)" || return 1
+    if ! git clone --quiet --depth 1 --branch "$branch" "$repo" "$tmp/repo"; then
+        rm -rf "$tmp"
+        return 1
+    fi
+
+    src="$tmp/repo"
+    [ "$subdir" = "." ] || src="$src/$subdir"
+    if [ ! -f "$src/Makefile" ]; then
+        echo "Package Makefile not found: $repo ($subdir)" >&2
+        rm -rf "$tmp"
+        return 1
+    fi
+
+    if ! mv "$src" "$dest"; then
+        rm -rf "$tmp"
+        return 1
+    fi
+    rm -rf "$dest/.git" "$tmp"
+}
+
+add_custom_package luci-theme-aurora https://github.com/eamonxg/luci-theme-aurora.git master || exit 1
+add_custom_package luci-app-aurora-config https://github.com/eamonxg/luci-app-aurora-config.git master || exit 1
+add_custom_package luci-theme-carbon https://github.com/mrjoechen/luci-theme-carbon.git main || exit 1
+add_custom_package bandix https://github.com/timsaya/openwrt-bandix.git main openwrt-bandix || exit 1
+add_custom_package luci-app-bandix https://github.com/timsaya/luci-app-bandix.git main luci-app-bandix || exit 1
+
 LUCI_RPC=feeds/luci/modules/luci-base/root/usr/share/rpcd/ucode/luci
 sed -i "s|popen('top -n1[^;]*;|popen('/sbin/cpuusage');|" "$LUCI_RPC"
 grep -q "popen('/sbin/cpuusage')" "$LUCI_RPC" || exit 1
