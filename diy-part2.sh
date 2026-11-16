@@ -19,15 +19,6 @@
 # Modify hostname
 #sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
 
-# Add custom packages
-mkdir -p package/custom
-
-git clone --depth 1 -b master https://github.com/eamonxg/luci-theme-aurora.git package/custom/luci-theme-aurora || exit 1
-git clone --depth 1 -b master https://github.com/eamonxg/luci-app-aurora-config.git package/custom/luci-app-aurora-config || exit 1
-git clone --depth 1 -b main https://github.com/mrjoechen/luci-theme-carbon.git package/custom/luci-theme-carbon || exit 1
-git clone --depth 1 -b main https://github.com/timsaya/openwrt-bandix.git package/custom/openwrt-bandix || exit 1
-git clone --depth 1 -b main https://github.com/timsaya/luci-app-bandix.git package/custom/luci-app-bandix || exit 1
-
 LUCI_RPC=feeds/luci/modules/luci-base/root/usr/share/rpcd/ucode/luci
 sed -i "s|popen('top -n1[^;]*;|popen('/sbin/cpuusage');|" "$LUCI_RPC"
 grep -q "popen('/sbin/cpuusage')" "$LUCI_RPC" || exit 1
