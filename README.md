@@ -1,6 +1,4 @@
-![精简自用，请自己 FORK 后编译固件!!!](assets/fork-build-warning.svg)
-
-# Nokia XG-040G-MD 精简版 PonWrt 固件
+# Nokia XG-040G-MD PonWrt 固件
 
 仅编译 **Nokia XG-040G-MD（UBI）**，基于 Airoha AN7581 平台。构建源码使用 [1018ji/ponwrt](https://github.com/1018ji/ponwrt) 的 `master` 分支。
 
