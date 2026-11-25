@@ -67,10 +67,14 @@
 
 工作流在更新 LuCI feed 后、安装 feed 前自动应用 [补丁](patches/feeds/luci)。LuCI 跟随上游更新，补丁冲突时会停止构建，需适配后重试。
 
-本地构建时，在更新 LuCI feed 后、安装 feed 前运行：
+本地构建时，使用统一的补丁脚本，分别在拉取源码后、更新 feeds 后（安装 feeds 前）运行对应命令：
 
 ```sh
-./scripts/apply-feed-patches.sh /path/to/openwrt/feeds
+# 拉取 OpenWrt 源码后、更新 feeds 前
+./scripts/apply-patches.sh source /path/to/openwrt
+
+# 更新 feeds 后、安装 feeds 前
+./scripts/apply-patches.sh feeds /path/to/openwrt/feeds
 ```
 
-已完整应用的补丁会跳过，冲突或部分应用时停止。已有编译产物时，先清理并重新编译 `luci-base`（含中文翻译）和 `luci-mod-status`。
+主源码补丁位于 `patches/openwrt/`，各 feed 的补丁位于 `patches/feeds/<feed>/`。仅处理 `.patch` 文件，禁用的补丁会跳过。已完整应用的补丁会跳过，冲突或部分应用时停止。已有编译产物时，先清理并重新编译 `luci-base`（含中文翻译）和 `luci-mod-status`。

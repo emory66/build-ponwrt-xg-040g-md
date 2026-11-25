@@ -101,11 +101,7 @@ jobs:
           openwrt-ccache-an7581-
 
     - name: Apply source patches
-      run: |
-        shopt -s nullglob
-        for patch in patches/openwrt/*.patch; do
-          git -C openwrt apply "$GITHUB_WORKSPACE/$patch"
-        done
+      run: ./scripts/apply-patches.sh source openwrt
 
     - name: Load custom feeds
       run: |
@@ -118,7 +114,7 @@ jobs:
       run: cd openwrt && ./scripts/feeds update -a
 
     - name: Apply feed patches
-      run: ./scripts/apply-feed-patches.sh openwrt/feeds
+      run: ./scripts/apply-patches.sh feeds openwrt/feeds
 
     - name: Install feeds
       run: cd openwrt && ./scripts/feeds install -a
