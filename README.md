@@ -4,7 +4,7 @@
 
 仅编译 **Nokia XG-040G-MD（UBI）**，基于 Airoha AN7581 平台。构建源码使用 [1018ji/ponwrt](https://github.com/1018ji/ponwrt) 的 `master` 分支。
 
-保留 PON 管理、基础 IPv6、BBR、LuCI 中文界面和 Bootstrap 主题，精简 USB/存储、无线、VPN、网络扩展及调试工具。
+以 PON 管理和基础路由功能为核心，保留 IPv6、LuCI 中文界面及必要的系统工具，并按自用需求扩展硬件加速管理、流量统计、网络代理、文件共享和 USB/存储功能。使用 APK 软件包管理器。
 
 ![PonWrt 状态页面预览，包含 CPU/PON 温度显示](assets/ponwrt-status-preview-20261023.png)
 
@@ -13,16 +13,28 @@
 | 项目 | 当前配置 |
 | --- | --- |
 | 镜像 | Initramfs 使用 ZSTD 压缩，保留 SquashFS 根文件系统 |
-| 设备功能 | 关闭 USB、存储扩展和无线功能及其依赖 |
-| 网络扩展 | 关闭 WireGuard、OpenVPN、透明代理、组播路由及其他高级网络扩展 |
-| DNS/DHCP | 保留 DHCP、DHCPv6、nftset；关闭 DNSSEC、权威 DNS、conntrack 和 TFTP 扩展 |
-| SSH | 保留 SSH 服务端、SCP/SFTP 和本地端口转发；关闭 SSH 客户端、agent/远程转发和 FIDO 支持 |
-| 内核与工具 | 精简 Swap、namespace、部分 cgroup、内核调试和开发工具；关闭 `procd-ujail`，保留 `procd-seccomp` |
-| LuCI | 使用 Bootstrap 主题，移除「插件」「诊断」菜单 |
-| 状态信息 | 显示 CPU/PON 温度、总 CPU 与每核使用率、PPE 流表已绑定/总条目数；架构信息仅显示 CPU 架构和核心数 |
+| 设备功能 | 保留 PON 管理，恢复目标设备默认 USB/存储支持，精简无线功能 |
+| 网络扩展 | 集成 Nikki、OpenClash、ZeroTier、UPnP、ARP 绑定及网络唤醒 |
+| DNS/DHCP | 使用 dnsmasq-full，保留 DHCP、DHCPv6、nftset；关闭 DNSSEC、权威 DNS、conntrack 和 TFTP 扩展 |
+| SSH | 使用 Dropbear SSH 服务 |
+| 内核与工具 | 精简 Swap、namespace 和部分 cgroup；关闭 `procd-ujail`，保留 `procd-seccomp`；集成 htop、coremark 和 wakeonlan |
+| LuCI | 集成 Bootstrap、Aurora、Carbon 主题及 Aurora 配置插件，移除「插件」「诊断」菜单 |
+| 状态信息 | 显示 CPU/PON 温度、总 CPU 与每核使用率、PPE 流表已绑定/统计条目数；架构信息仅显示 CPU 架构和核心数 |
+| 默认设置 | 集成 default-settings、default-settings-chn，初始化 LuCI 自动语言、中国时区及 NTP；默认 APK 镜像为 `https://mirror.nju.edu.cn/immortalwrt`（已有镜像配置时优先保留） |
 | 其他 | 最大连接数设为 `30000`，启用 BusyBox `usleep` |
 
-`kmod-mppe`、`kmod-macvlan` 作为现有依赖保留。内核未保留完整容器支持；如需 Docker/LXC 或 `procd-ujail`，需恢复相应配置。完整编译选项见 [`.config`](.config)。
+### 主要 LuCI 插件
+
+| 分类 | 软件包 |
+| --- | --- |
+| 光猫与硬件加速 | `luci-app-pon`、`luci-app-airoha-npu` |
+| 流量统计 | `luci-app-bandix` |
+| 网络代理与组网 | `luci-app-nikki`、`luci-app-openclash`、`luci-app-zerotier` |
+| 网络工具 | `luci-app-arpbind`、`luci-app-upnp`、`luci-app-wol` |
+| 文件与存储 | `luci-app-filemanager`、`luci-app-ksmbd`（NAS 菜单） |
+| 系统工具 | `luci-app-store`、`luci-app-ramfree`、`luci-app-ttyd` |
+
+当前未启用 QuickStart，nas 和 nas_luci feeds 已注释。内核未保留完整容器支持；如需 Docker/LXC 或 `procd-ujail`，需恢复相应配置。上述内容以仓库当前选择及目标设备默认包为准，最终依赖和软件包清单由 `make defconfig` 及实际构建确定。完整编译选项见 [`.config`](.config)。
 
 ## 编译与下载
 
@@ -58,7 +70,7 @@
 本地构建时，在更新 LuCI feed 后、安装 feed 前运行：
 
 ```sh
-./scripts/apply-feed-patches.sh /path/to/openwrt/feeds/luci
+./scripts/apply-feed-patches.sh /path/to/openwrt/feeds
 ```
 
 已完整应用的补丁会跳过，冲突或部分应用时停止。已有编译产物时，先清理并重新编译 `luci-base`（含中文翻译）和 `luci-mod-status`。
