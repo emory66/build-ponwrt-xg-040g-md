@@ -100,6 +100,13 @@ jobs:
         restore-keys: |
           openwrt-ccache-an7581-
 
+    - name: Apply source patches
+      run: |
+        shopt -s nullglob
+        for patch in patches/openwrt/*.patch; do
+          git -C openwrt apply "$GITHUB_WORKSPACE/$patch"
+        done
+
     - name: Load custom feeds
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default

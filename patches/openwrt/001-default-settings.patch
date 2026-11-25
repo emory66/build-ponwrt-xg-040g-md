@@ -1,0 +1,24 @@
+diff --git a/package/emortal/default-settings/Makefile b/package/emortal/default-settings/Makefile
+--- a/package/emortal/default-settings/Makefile
++++ b/package/emortal/default-settings/Makefile
+@@ -6,7 +6,7 @@
+ include $(TOPDIR)/rules.mk
+ 
+ PKG_NAME:=default-settings
+-PKG_RELEASE:=29
++PKG_RELEASE:=30
+ 
+ PKG_LICENSE:=GPL-2.0-only
+ 
+diff --git a/package/emortal/default-settings/files/99-default-settings-chinese b/package/emortal/default-settings/files/99-default-settings-chinese
+--- a/package/emortal/default-settings/files/99-default-settings-chinese
++++ b/package/emortal/default-settings/files/99-default-settings-chinese
+@@ -27,7 +27,7 @@
+ 
+ apk_mirror="$(uci -q get system.@imm_init[0].apk_mirror)"
+ if [ -z "$apk_mirror" ]; then
+-	apk_mirror="https://mirrors.vsean.net/openwrt"
++	apk_mirror="https://mirror.nju.edu.cn/immortalwrt"
+ 	uci -q batch <<-EOF
+ 		set system.@imm_init[0].apk_mirror="$apk_mirror"
+ 		commit system
