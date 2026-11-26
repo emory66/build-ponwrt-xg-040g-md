@@ -37,7 +37,7 @@ apply_patches() {
 	if git -C "$git_dir" apply --check --whitespace=error-all "$@" 2>/dev/null; then
 		git -C "$git_dir" apply --whitespace=error-all "$@"
 		printf '%s\n' "$name patches applied at $git_head"
-	elif git -C "$git_dir" apply --reverse --check --whitespace=error-all "$@" 2>/dev/null; then
+	elif git -C "$git_dir" apply --reverse --check --whitespace=nowarn "$@" 2>/dev/null; then
 		printf '%s\n' "$name patches are already applied at $git_head"
 	else
 		git -C "$git_dir" apply --check --whitespace=error-all "$@" >&2 || :
