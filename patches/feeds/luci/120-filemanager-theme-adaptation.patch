@@ -1,0 +1,1071 @@
+diff --git a/applications/luci-app-filemanager/htdocs/luci-static/resources/view/system/filemanager.js b/applications/luci-app-filemanager/htdocs/luci-static/resources/view/system/filemanager.js
+index b9e4d6f..cd4a2dc 100644
+--- a/applications/luci-app-filemanager/htdocs/luci-static/resources/view/system/filemanager.js
++++ b/applications/luci-app-filemanager/htdocs/luci-static/resources/view/system/filemanager.js
+@@ -245,120 +245,251 @@ function getFileList(path) {
+ 
+ // Function to insert CSS styles into the document
+ function insertCss(cssContent) {
+-	const styleElement = document.createElement('style');
+-	styleElement.type = 'text/css';
+-	styleElement.appendChild(document.createTextNode(cssContent));
+-	document.head.appendChild(styleElement);
++	let styleElement = document.getElementById('filemanager-theme-style');
++	if (!styleElement) {
++		styleElement = document.createElement('style');
++		styleElement.id = 'filemanager-theme-style';
++		document.head.appendChild(styleElement);
++	}
++	styleElement.textContent = cssContent;
+ }
+ 
+ // CSS styles for the file manager interface
+ const cssContent = `
+-:root {
+-	color-scheme: light dark;
+-	--light-bg: #EEE;
+-	--light-bg-semi: #FFF;
+-	--light-bg-semi2: #EEE;
+-	--light-color: #111;
+-	--light-border: #CCC;
+-	--dark-bg: #111;
+-	--dark-bg-semi: #222;
+-	--dark-bg-semi2: #333;
+-	--dark-color: #EEE;
+-	--dark-border: #666;
+-}
+-#file-manager-container,
+-#file-manager-container textarea,
+-#file-manager-container textarea:hover,
+-#file-manager-container input,
+-#file-manager-container input:hover {
+-	color: light-dark(var(--light-color),var(--dark-color));
+-	background-color: light-dark(var(--light-bg-semi), var(--dark-bg-semi));
+-}
+-.node-admin-system-filemanager .main-right,
+-.main-right > #maincontent,
+-[data-page=admin-system-filemanager] > #maincontainer > #maincontent {
+-    background-color: light-dark(var(--light-bg-semi), var(--dark-bg-semi));
+-}
+-.cbi-button-apply, 
+-.cbi-button-reset, 
+-.cbi-button-save:not(.custom-save-button) {
+-	display: none !important;
+-}
+-.cbi-page-actions {
+-	background: none !important;
+-	border: none !important;
+-	padding: ${config.padding}px 0 !important;
+-	margin: 0 !important;
+-	display: flex;
+-	justify-content: flex-start;
+-	margin-top: 10px;
++/* filemanager-theme-adaptation-v5.3: theme first */
++#file-manager-container {
++	--fm-surface: var(--surface, var(--cb-card-solid, var(--background-color-high, Canvas)));
++	--fm-head: var(--surface-sunken, var(--cb-card-solid, var(--background-color-low, Canvas)));
++	--fm-border: var(--hairline, var(--cb-border-strong, var(--border-color-medium, color-mix(in srgb, currentColor 15%, transparent))));
++	--fm-muted: var(--text-muted, var(--cb-text-2, var(--text-color-medium, currentColor)));
++	--fm-primary: var(--brand, var(--cb-accent, Highlight));
++	--fm-radius: var(--cb-radius-md, 12px);
++	--fm-hover: color-mix(in srgb, var(--fm-primary) 6%, var(--fm-surface));
++	--fm-selected: color-mix(in srgb, var(--fm-primary) 13%, var(--fm-surface));
++	min-width: 0;
++	width: 100%;
+ }
+-#file-manager-container .cbi-tabmenu {
+-	background: none !important;
+-	border: none !important;
+-	margin: 0 !important;
+-	padding: 0 !important;
++#file-manager-container .file-manager-header {
++	display: flex;
++	align-items: center;
++	flex-wrap: wrap;
++	gap: 10px;
++	margin-bottom: 16px;
++	padding: 4px;
+ }
+-#file-manager-container .cbi-tabmenu > li[class~="cbi-tab"] {
+-	background: none !important;
++#file-manager-container .file-manager-header h2 {
++	margin: 0;
++	font-size: 1.35em;
+ }
+-#file-manager-container .cbi-tabmenu li {
+-	margin: 15px 15px 21px 0;
+-	border: 0;
+-	height: unset;
++#file-manager-container #path-input {
++	flex: 1 1 200px;
++	min-width: 0;
++	width: auto;
++	max-width: none;
++	margin: 0;
+ }
+-#file-manager-container .cbi-tabmenu > li > a {
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
+-	color: light-dark(var(--light-color),var(--dark-color));
+-	padding: 3px 13px;
+-	border-radius: 5px;
+-	border: 1px solid;
+-	border-color: light-dark(var(--light-border),var(--dark-border));
++#file-manager-container #go-button {
++	flex: 0 0 auto;
+ }
+-#file-manager-container .cbi-tabmenu > li > a:hover {
+-	background-color: light-dark(var(--dark-bg), var(--light-bg));
+-	color: light-dark(var(--dark-color),var(--light-color));
++#file-manager-container #tab-group,
++#file-manager-container .cbi-tabcontainer-content,
++#file-manager-container #content-filemanager {
++	padding: 0;
++	border: 0;
++	background: transparent;
++	box-shadow: none;
+ }
+-#file-list-container {
++#file-manager-container #file-list-container {
++	box-sizing: border-box;
++	width: 100%;
++	max-width: 100%;
++	min-width: 0;
+ 	overflow: auto;
+-	border-top: 1px solid;
+-	border-bottom: 1px solid;
+-	border-left: 1px solid;
+-	border-color: light-dark(var(--light-border),var(--dark-border));
+-	padding: 0;
+-	min-width: 600px;
+ 	position: relative;
+-	resize: both;
+-}
+-#file-list {
+-	background-color: light-dark(var(--light-bg-semi), var(--dark-bg-semi));
+-}
+-#file-list > tr:nth-of-type(2n) {
+-	background-color: light-dark(var(--light-bg-semi2), var(--dark-bg-semi2));
++	resize: vertical;
++	border: 1px solid var(--fm-border);
++	border-radius: var(--fm-radius);
++	background: var(--fm-surface);
++}
++/* Keep a real table when themes switch ordinary tables to mobile cards. */
++#file-manager-container #file-table {
++	display: table;
++	table-layout: fixed;
++	width: 100%;
++	min-width: 720px;
++	margin: 0;
++	border: 0;
++	border-collapse: separate;
++	border-spacing: 0;
++	border-radius: 0;
++	background: transparent;
++	box-shadow: none;
++}
++#file-manager-container #file-table thead { display: table-header-group; }
++#file-manager-container #file-table tbody { display: table-row-group; }
++#file-manager-container #file-table tr { display: table-row; background: transparent; }
++#file-manager-container #file-table th,
++#file-manager-container #file-table td {
++	display: table-cell;
++	box-sizing: border-box;
++	text-align: left;
++	vertical-align: middle;
++	white-space: nowrap;
++	border: 0;
++	border-bottom: 1px solid var(--fm-border);
++	border-radius: 0;
++	font-size: .94em;
++	line-height: 1.45;
+ }
+-#file-table > thead > tr > th:last-child {
+-border-right: 1px solid;
+-border-color: light-dark(var(--light-border),var(--dark-border));
++#file-manager-container #file-table th {
++	position: sticky;
++	top: 0;
++	z-index: 2;
++	padding: 10px 32px 10px 12px;
++	background: var(--fm-head);
++	color: var(--fm-muted);
++	font-weight: 600;
++}
++#file-manager-container #file-table th:last-child { padding-right: 12px; }
++#file-manager-container #file-table td {
++	padding: 8px 12px;
++	background: transparent;
++	overflow: hidden;
++	text-overflow: ellipsis;
+ }
+-#file-list-container .drag-over {
+-	border: 2px dashed #00BFFF;
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
++#file-manager-container #file-table tbody tr:last-child td { border-bottom: 0; }
++#file-manager-container #file-table td::before { display: none; content: none; }
++#file-manager-container #file-table tbody tr:hover > td { background: var(--fm-hover); }
++#file-manager-container #file-table tbody tr:has(.select-checkbox:checked) > td { background: var(--fm-selected); }
++#file-manager-container .directory-link { font-weight: 600; }
++#file-manager-container .file-link { color: inherit; }
++#file-manager-container .size-cell { font-family: monospace; }
++#file-manager-container .size-number,
++#file-manager-container .size-unit { display: inline-block; text-align: right; }
++#file-manager-container .size-unit { margin-left: .5ch; }
++#file-manager-container .resizer {
++	position: absolute;
++	right: 0;
++	top: 0;
++	width: 5px;
++	height: 100%;
++	cursor: col-resize;
++	user-select: none;
++	z-index: 3;
+ }
+-#drag-overlay {
++#file-manager-container .resizer::after {
++	content: "";
+ 	position: absolute;
++	right: 2px;
+ 	top: 0;
+-	left: 0;
+-	width: 100%;
++	width: 1px;
+ 	height: 100%;
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
++	background: var(--fm-border);
++}
++#file-manager-container #file-table .sort-button {
++	position: absolute;
++	right: 5px;
++	top: 50%;
++	transform: translateY(-50%);
++	padding: 2px 5px;
++	min-width: 24px;
++	min-height: 24px;
++	line-height: 1.2;
++}
++#file-manager-container #file-table input[type="checkbox"] {
++	position: relative;
++	vertical-align: middle;
++	flex: none;
++}
++/* Supply only the mixed-state glyph missing from some themes. */
++#file-manager-container #select-all-checkbox:indeterminate::after {
++	content: "";
++	position: absolute;
++	top: 50%;
++	left: 50%;
++	width: 55%;
++	height: 2px;
++	transform: translate(-50%, -50%);
++	opacity: 1;
++	background: currentColor;
++	border: 0;
++	mask: none;
++}
++#file-manager-container #file-table :is(.edit-button, .duplicate-button, .delete-button, .download-button) {
++	display: inline-flex;
++	align-items: center;
++	justify-content: center;
++	width: 25px;
++	height: 25px;
++	margin: 0 1px;
++	border-radius: 6px;
++	vertical-align: middle;
++	font-size: 14px;
++	line-height: 1;
++	cursor: pointer;
++}
++#file-manager-container #file-table :is(.edit-button, .duplicate-button, .delete-button, .download-button):hover {
++	background: var(--fm-selected);
++}
++#file-manager-container #file-list-container.drag-over { outline: 2px dashed var(--fm-primary); outline-offset: -2px; }
++#file-manager-container #drag-overlay {
++	position: absolute;
++	inset: 0;
++	background: var(--fm-surface);
+ 	display: flex;
+ 	align-items: center;
+ 	justify-content: center;
+ 	font-size: 24px;
+-	color: light-dark(var(--light-color), var(--dark-color));
+ 	z-index: 10;
+ 	pointer-events: none;
+ }
++#file-manager-container #content-filemanager > #status-bar {
++	display: flex;
++	align-items: center;
++	justify-content: space-between;
++	flex-wrap: wrap;
++	gap: 8px;
++	margin: 12px 0 0;
++	min-height: 44px;
++	padding: 9px 12px;
++	box-sizing: border-box;
++	border: 1px solid var(--fm-border);
++	border-bottom: 0;
++	border-radius: var(--fm-radius) var(--fm-radius) 0 0;
++	background: var(--fm-surface);
++}
++#file-manager-container #status-info {
++	display: flex;
++	align-items: center;
++	flex-wrap: wrap;
++	gap: 5px;
++	font-size: .9em;
++	color: var(--fm-muted);
++}
++#file-manager-container #status-progress { flex: 1 1 180px; }
++#file-manager-container #status-progress:empty { display: none; }
++#file-manager-container .cbi-progressbar { width: 100%; }
++#file-manager-container .cbi-progressbar div { transition: width .2s; }
++#file-manager-container #content-filemanager > .cbi-page-actions {
++	position: static;
++	display: flex;
++	flex-wrap: wrap;
++	justify-content: flex-start;
++	align-items: center;
++	gap: 8px;
++	margin: 0;
++	padding: var(--fm-action-padding, 10px) 12px;
++	border: 1px solid var(--fm-border);
++	border-radius: 0 0 var(--fm-radius) var(--fm-radius);
++	background: var(--fm-surface);
++	box-shadow: none;
++}
++/* Carbon applies auto margins to ordinary page-action buttons. */
++#file-manager-container #content-filemanager > .cbi-page-actions > button {
++	flex: 0 0 auto;
++	width: auto;
++	margin: 0 !important;
++}
+ #file-manager-container .editor-container {
+ 	display: flex;
+ 	flex-direction: column;
+@@ -369,277 +500,199 @@ border-color: light-dark(var(--light-border),var(--dark-border));
+ 	flex: 1;
+ 	display: flex;
+ 	overflow: hidden;
+-	border: 1px solid;
+-	border-color: light-dark(var(--light-border),var(--dark-border));
++	border: 1px solid var(--fm-border);
+ }
+ #file-manager-container .line-numbers {
+ 	width: 50px;
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
++	background: var(--fm-head);
+ 	text-align: right;
+ 	padding-right: 5px;
+ 	user-select: none;
+-	border-right: 1px solid;
+-	border-color: light-dark(var(--light-border),var(--dark-border));
+-	overflow: hidden;
++	border-right: 1px solid var(--fm-border);
+ 	flex-shrink: 0;
+-	-ms-overflow-style: none; /* Hide scrollbar in IE и Edge */
+-	scrollbar-width: none; /* Hide scrollbar in Firefox */
+-}
+-#file-manager-container .line-numbers::-webkit-scrollbar {
+-	display: none; /* Hide scrollbar in Chrome, Safari и Opera */
++	overflow-y: scroll;
++	scrollbar-width: none;
+ }
+-#file-manager-container .line-numbers div {
++#file-manager-container .line-numbers::-webkit-scrollbar { display: none; }
++#file-manager-container .line-numbers div,
++#file-manager-container #editor-textarea {
+ 	font-family: monospace;
+ 	font-size: 14px;
+ 	line-height: 1.2em;
+-	height: 1.2em;
+ }
+-#editor-message {
+-	font-size: 18px;
+-	font-weight: bold;
+-}
+-#editor-textarea {
++#file-manager-container .line-numbers div { height: 1.2em; }
++#file-manager-container #editor-textarea {
+ 	flex: 1;
+ 	resize: none;
+ 	border: none;
+-	font-family: monospace;
+-	font-size: 14px;
+-	line-height: 1.2em;
+ 	padding: 0;
+ 	margin: 0;
+ 	overflow: auto;
+-	box-sizing: border-box;
+-}
+-#editor-textarea, .line-numbers {
+ 	overflow-y: scroll;
+-}
+-#file-manager-container .parent-dir {
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
+-	border-top: 1px solid;
+-	border-bottom: 1px solid;
+-	border-color: light-dark(var(--light-border),var(--dark-border));
+-}
+-#file-table th {
+-	text-align: left !important;
+-	position: sticky;
+-	top: 0;
+-	border-right: 1px solid;
+-	border-color: light-dark(var(--light-border),var(--dark-border));
+-	box-sizing: border-box;
+-	padding-right: 30px;
+-	white-space: nowrap;
+-	min-width: 100px;
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
+-	z-index: 2;
+-	padding: 5px 6px;
+-	color: light-dark(var(--light-color),var(--dark-color));
+-}
+-#file-table td {
+-	text-align: left !important;
+-	border-right: 1px solid;
+-	border-color: light-dark(var(--light-border),var(--dark-border));
+ 	box-sizing: border-box;
+-	white-space: nowrap;
+-	min-width: 100px;
+-	overflow: hidden;
+-	text-overflow: ellipsis;
+-	padding: 1px 6px;
+-	color: light-dark(var(--light-color),var(--dark-color));
+-}
+-#file-manager-container th:last-child, td:last-child {
+-	border-right: 0;
+ }
+-#file-manager-container tr:hover {
+-	background-color: light-dark(var(--light-bg), var(--dark-bg)) !important;
++/* Keep the theme's input and focus styles, with space for the focus ring. */
++#file-manager-container #settings-form {
++	padding: 4px;
+ }
+-#file-manager-container .download-button {
+-	color: green;
+-	cursor: pointer;
+-	margin-left: 5px;
+-}
+-#file-manager-container .delete-button {
+-	color: red;
+-	cursor: pointer;
+-	margin-left: 5px;
++#file-manager-container #settings-form > div:not(.cbi-page-actions) {
++	margin-bottom: 12px;
+ }
+-#file-manager-container .edit-button {
+-	color: blue;
+-	cursor: pointer;
+-	margin-left: 5px;
+-}
+-#file-manager-container .duplicate-button {
+-	color: orange;
+-	cursor: pointer;
+-	margin-left: 5px;
+-}
+-#file-manager-container .symlink {
+-	color: green;
+-}
+-#file-manager-container .status-link {
+-	color: blue;
+-	text-decoration: underline;
+-	cursor: pointer;
+-}
+-#file-manager-container .action-button {
+-	margin-right: 10px;
+-	cursor: pointer;
++#file-manager-container #settings-form label {
++	display: block;
++	margin-bottom: 4px;
+ }
+-#file-manager-container .size-cell {
+-	font-family: monospace;
++#file-manager-container #settings-form .cbi-input-text {
+ 	box-sizing: border-box;
+-	white-space: nowrap;
+-	align-items: center;
+-}
+-#file-manager-container .size-number {
+-	display: inline-block;
+-	width: 8ch;
+-	text-align: right;
+-}
+-#file-manager-container .size-unit {
+-	display: inline-block;
+-	width: 4ch;
+-	text-align: right;
+-	margin-left: 0.5ch;
+-}
+-#file-manager-container .table {
+-	table-layout: fixed;
+-	border-collapse: collapse;
+-	white-space: nowrap;
+ 	width: 100%;
+-	margin: 0 !important;
+-}
+-#file-manager-container .table th:nth-child(3), .table td:nth-child(3) {
+-	width: 100px;
+-	min-width: 100px;
+-	max-width: 500px;
+-}
+-#file-manager-container .resizer {
+-	position: absolute;
+-	right: 0;
+-	top: 0;
+-	width: 5px;
+-	height: 100%;
+-	cursor: col-resize;
+-	user-select: none;
+-	z-index: 3;
++	max-width: 100%;
+ }
+-#file-manager-container .resizer::after {
+-	content: "";
+-	position: absolute;
+-	right: 2px;
+-	top: 0;
+-	width: 1px;
+-	height: 100%;
+-	background: #aaa;
+-}
+-#file-list-container.resizeable {
+-	resize: both;
+-	overflow: auto;
+-}
+-#file-manager-container .sort-button {
+-	position: absolute;
+-	right: 10px;
+-	top: 50%;
+-	transform: translateY(-50%);
+-	background: none;
+-	border: 1px solid; /* Add a visible border */
+-	border-color: light-dark(var(--light-border),var(--dark-border));
+-	color: #fff; /* White text color for better contrast on dark backgrounds */
+-	cursor: pointer;
+-	padding: 2px 5px; /* Add padding for better clickability */
+-	font-size: 12px; /* Set font size */
+-	border-radius: 4px; /* Rounded corners for a better appearance */
+-	background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+-	transition: background-color 0.3s, color 0.3s; /* Smooth transition effects for hover */
++/* The text editor is a composite control: focus belongs to its outer frame. */
++#file-manager-container .editor-content:has(#editor-textarea) {
++	border-radius: var(--fm-radius);
+ }
+-
+-#file-manager-container .sort-button:hover {
+-	background-color: #fff; /* Change background to white on hover */
+-	color: #000; /* Change text color to black on hover */
+-	border-color: #fff; /* White border on hover */
++#file-manager-container .editor-content:has(#editor-textarea:focus-visible) {
++	outline: 2px solid var(--fm-primary);
++	outline-offset: -2px;
+ }
+-#file-manager-container .sort-button:focus {
++#file-manager-container #editor-textarea,
++#file-manager-container #editor-textarea:focus {
++	min-width: 0;
++	min-height: 0;
++	max-width: none;
++	border: 0;
++	border-radius: 0;
+ 	outline: none;
++	box-shadow: none;
++	padding: 8px;
+ }
+-#status-bar {
+-	margin-top: 10px;
+-	padding: 10px;
+-	background-color: #f9f9f9;
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
+-	border: 1px solid;
+-	border-color: light-dark(var(--light-border),var(--dark-border));
+-	min-height: 40px;
+-	display: flex;
+-	align-items: center;
+-	justify-content: space-between;
++#file-manager-container .line-numbers { padding-top: 8px; }
++#file-manager-container #content-help {
++	border: 1px solid var(--fm-border);
++	border-radius: var(--fm-radius);
++	line-height: 1.6;
+ }
+-#status-info {
+-	font-weight: bold;
++#file-manager-container #content-help :is(h1, h2, h3) {
++	margin: 1em 0 .45em;
++	padding: 0;
++	line-height: 1.3;
++}
++#file-manager-container #content-help h1:first-child { margin-top: 0; }
++#file-manager-container #content-help p { margin: .5em 0; }
++#file-manager-container #content-help :is(ul, ol) {
++	margin: .5em 0;
++	padding-inline-start: 1.5em;
++}
++#file-manager-container #content-help ul { list-style: disc outside; }
++#file-manager-container #content-help ol { list-style: decimal outside; }
++#file-manager-container #content-help li { margin: .2em 0; }
++/* Editor controls use the same local layout fix as file actions. */
++#file-manager-container .editor-container > .cbi-page-actions {
++	position: static;
+ 	display: flex;
++	flex: 0 0 auto;
++	flex-wrap: wrap;
++	justify-content: flex-start;
+ 	align-items: center;
++	gap: 8px;
+ }
+-#status-info span {
+-	padding-right: 10px;
+-}
+-#status-progress {
+-	width: 50%;
++#file-manager-container .editor-container > .cbi-page-actions > button {
++	flex: 0 0 auto;
++	margin: 0 !important;
+ }
+-.cbi-progressbar {
+-	width: 100%;
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
+-	border-radius: 5px;
++#file-manager-container .editor-container { padding: 4px 4px 12px; box-sizing: border-box; }
++#file-manager-container .editor-content { min-height: 0; border-radius: var(--fm-radius); }
++/* HexEditor has its own stylesheet; map its palette locally to the theme. */
++#file-manager-container #hexedit-container {
++	--clr-border: var(--fm-border);
++	--clr-background: var(--fm-surface);
++	--clr-header: var(--fm-muted);
++	--clr-offset: var(--fm-muted);
++	--clr-non-printable: var(--fm-muted);
++	--clr-selected: var(--fm-selected);
++	--clr-selected-editing: var(--fm-selected);
++	--clr-highlight: color-mix(in srgb, #eab308 35%, var(--fm-surface));
++	--clr-cursor-active: var(--fm-primary);
++	--clr-cursor-passive: var(--fm-selected);
++	font-family: monospace;
++	font-size: 13px;
++	--hex-offset-width: calc(12ch + 12px);
++	--hex-byte-width: calc(36ch + 12px);
++	min-width: 0;
++	min-height: 0;
++	border: 0;
++	background: var(--fm-surface);
++}
++#file-manager-container #hexedit-container .hexedit-search-container {
++	border-color: var(--fm-border);
++	padding: 8px;
++}
++#file-manager-container #hexedit-container .hexedit-search-group > input {
++	flex: 1 1 0;
++	min-width: 0;
++	width: auto;
++	max-width: none;
++}
++#file-manager-container #hexedit-container .hexedit-search-group > button { flex: 0 0 auto; }
++#file-manager-container #hexedit-container .hexedit-headers {
++	background: var(--fm-head);
++	border-bottom: 1px solid var(--fm-border);
+ 	overflow: hidden;
+-	height: 10px;
+ }
+-.cbi-progressbar div {
+-	height: 100%;
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
+-	width: 0%;
+-	transition: width 0.2s;
++#file-manager-container #hexedit-container .hexedit-content {
++	min-height: 0;
++	border-top: 0;
+ }
+-.file-manager-header {
+-	display: flex;
+-	align-items: center;
++#file-manager-container #hexedit-container :is(.offsets-header, .hexview-header, .textview-header, .offsets, .hexview, .textview) {
++	font-family: monospace;
++	font-size: 13px;
++	line-height: 16px;
++	border-right: 1px solid var(--fm-border);
+ }
+-.file-manager-header h2 {
+-	margin: 0;
+-	min-width: fit-content;
++#file-manager-container #hexedit-container :is(.offsets-header, .offsets) {
++	width: var(--hex-offset-width);
++	flex: 0 0 var(--hex-offset-width);
+ }
+-.file-manager-header input {
+-	margin-left: 10px;
+-	width: 100%;
+-	font-size: 18px;
++#file-manager-container #hexedit-container :is(.hexview-header, .hexview) {
++	width: var(--hex-byte-width);
++	flex: 0 0 var(--hex-byte-width);
+ }
+-#go-button {
+-	font-size: 18px;
+-	background-color: light-dark(var(--light-bg), var(--dark-bg));
+-	color: light-dark(var(--light-color),var(--dark-color));
+-	border-radius: 5px;
+-	border: 1px solid;
+-	border-color: light-dark(var(--light-border),var(--dark-border));
++#file-manager-container #hexedit-container :is(.textview-header, .textview) {
++	min-width: calc(36ch + 12px);
++	margin-left: 0;
++	border-right: 0;
+ }
+-#go-button:hover {
+-	background-color: light-dark(var(--dark-bg), var(--light-bg));
+-	color: light-dark(var(--dark-color),var(--light-color));
++/* Virtual scrolling in HexEditor uses a fixed 16px row height. */
++#file-manager-container #hexedit-container :is(.offsets span, .hex-line, .text-line) {
++	height: 16px;
++	line-height: 16px;
+ }
+-#file-manager-container .directory-link {
+-	font-weight: bold;
++#file-manager-container #hexedit-container :is(.hexview-header, .hex-line, .text-line, .offsets) span {
++	font: inherit;
++	letter-spacing: normal;
++	flex-shrink: 0;
+ }
+-
+-#file-manager-container .file-link {
+-	color: inherit; /* Use the default text color */
++#file-manager-container #hexedit-container .passive-view-cursor { color: inherit; }
++#file-manager-container #hexedit-container .active-view-cursor {
++	animation: filemanager-hex-cursor 1s infinite;
++	color: inherit;
+ }
+-#content-settings h3 {
+-  margin-top: 0;
+-  padding-top: 0;
+-  padding-bottom: 25px;
+-  line-height: unset;
++@keyframes filemanager-hex-cursor {
++	0%, 100% { background: var(--fm-selected); }
++	50% { background: var(--fm-surface); }
++}
++@media (max-width: 600px) {
++	#file-manager-container .file-manager-header h2 { flex-basis: 100%; }
+ }
+ `;
+ 
+ 
+ // Main exported view module
+ return view.extend({
++	// This view has its own save actions; do not render the generic LuCI footer.
++	handleSave: null,
++	handleSaveApply: null,
++	handleReset: null,
+ 	editorMode: 'text',
+ 	hexEditorInstance: null,
+ 	// Method called when the view is loaded
+@@ -656,7 +709,8 @@ return view.extend({
+ 		const self = this;
+ 		insertCss(cssContent); // Insert CSS styles
+ 		const viewContainer = E('div', {
+-			'id': 'file-manager-container'
++			'id': 'file-manager-container',
++			'style': '--fm-action-padding: ' + (Number(config.padding) || 10) + 'px'
+ 		}, [
+ 			// File Manager Header
+ 			E('div', {
+@@ -666,8 +720,8 @@ return view.extend({
+ 				E('input', {
+ 					'type': 'text',
+ 					'id': 'path-input',
++					'class': 'cbi-input-text',
+ 					'value': currentPath,
+-					'style': 'margin-left: 10px;',
+ 					'keydown'(event) {
+ 						if (event.key === 'Enter') {
+ 							self.handleGoButtonClick(); // Trigger directory navigation on Enter
+@@ -676,8 +730,8 @@ return view.extend({
+ 				}),
+ 				E('button', {
+ 					'id': 'go-button',
+-					'click': this.handleGoButtonClick.bind(this),
+-					'style': 'margin-left: 10px; padding: 3px 12px;'
++					'class': 'btn cbi-button',
++					'click': this.handleGoButtonClick.bind(this)
+ 				}, _('&#8594;'))
+ 			]),
+ 
+@@ -699,7 +753,7 @@ return view.extend({
+ 						}, _('File Manager'))
+ 					]),
+ 					E('li', {
+-						'class': 'cbi-tab',
++						'class': 'cbi-tab-disabled',
+ 						'id': 'tab-editor'
+ 					}, [
+ 						E('a', {
+@@ -708,7 +762,7 @@ return view.extend({
+ 						}, _('Editor'))
+ 					]),
+ 					E('li', {
+-						'class': 'cbi-tab',
++						'class': 'cbi-tab-disabled',
+ 						'id': 'tab-settings'
+ 					}, [
+ 						E('a', {
+@@ -718,7 +772,7 @@ return view.extend({
+ 					]),
+ 					// Help Tab
+ 					E('li', {
+-						'class': 'cbi-tab',
++						'class': 'cbi-tab-disabled',
+ 						'id': 'tab-help'
+ 					}, [
+ 						E('a', {
+@@ -757,7 +811,7 @@ return view.extend({
+ 										}, [
+ 											_('Name'),
+ 											E('button', {
+-												'class': 'sort-button',
++												'class': 'btn cbi-button sort-button',
+ 												'data-field': 'name',
+ 												'title': _('Sort by Name')
+ 											}, '↕'),
+@@ -770,7 +824,7 @@ return view.extend({
+ 										}, [
+ 											_('Permissions'),
+ 											E('button', {
+-												'class': 'sort-button',
++												'class': 'btn cbi-button sort-button',
+ 												'data-field': 'permissions',
+ 												'title': _('Sort by Permissions')
+ 											}, '↕'),
+@@ -783,7 +837,7 @@ return view.extend({
+ 										}, [
+ 											_('Type'),
+ 											E('button', {
+-												'class': 'sort-button',
++												'class': 'btn cbi-button sort-button',
+ 												'data-field': 'type',
+ 												'title': _('Sort by Type')
+ 											}, '↕'),
+@@ -796,7 +850,7 @@ return view.extend({
+ 										}, [
+ 											_('Size'),
+ 											E('button', {
+-												'class': 'sort-button',
++												'class': 'btn cbi-button sort-button',
+ 												'data-field': 'size',
+ 												'title': _('Sort by Size')
+ 											}, '↕'),
+@@ -809,7 +863,7 @@ return view.extend({
+ 										}, [
+ 											_('Last Modified'),
+ 											E('button', {
+-												'class': 'sort-button',
++												'class': 'btn cbi-button sort-button',
+ 												'data-field': 'mtime',
+ 												'title': _('Sort by Last Modified')
+ 											}, '↕'),
+@@ -878,7 +932,7 @@ return view.extend({
+ 						}, _('Create File')),
+ 						E('button', {
+ 							'id': 'delete-selected-button',
+-							'class': 'btn action-button',
++							'class': 'btn cbi-button cbi-button-negative action-button',
+ 							'style': 'display: none;',
+ 							'click': this.handleDeleteSelected.bind(this)
+ 						}, _('Delete Selected'))
+@@ -902,7 +956,7 @@ return view.extend({
+ 				E('div', {
+ 					'id': 'content-help',
+ 					'class': 'cbi-tab',
+-					'style': 'display:none; padding: 10px; overflow:auto; width: 100%; height: 600px; resize: both; border: 1px solid; border-color: light-dark(var(--light-border),var(--dark-border)); box-sizing: border-box;'
++					'style': 'display:none; padding: 10px; overflow:auto; width: 100%; height: 600px; resize: both; box-sizing: border-box;'
+ 				}, [
+ 					// The content will be dynamically inserted by renderHelp()
+ 				]),
+@@ -925,81 +979,81 @@ return view.extend({
+ 									E('label', {}, _('Text Editor Height:')),
+ 									E('input', {
+ 										'type': 'number',
++										'class': 'cbi-input-text',
+ 										'id': 'texteditorHeight-input',
+-										'value': config.texteditorHeight,
+-										'style': 'width:100%; margin-bottom:10px;'
++										'value': config.texteditorHeight
+ 									})
+ 								]),
+ 								E('div', {}, [
+ 									E('label', {}, _('Hex Editor Height:')),
+ 									E('input', {
+ 										'type': 'number',
++										'class': 'cbi-input-text',
+ 										'id': 'hexeditorHeight-input',
+-										'value': config.hexeditorHeight,
+-										'style': 'width:100%; margin-bottom:10px;'
++										'value': config.hexeditorHeight
+ 									})
+ 								]),
+ 								E('div', {}, [
+ 									E('label', {}, _('Column Widths (format: name:width,type:width,...):')),
+ 									E('input', {
+ 										'type': 'text',
++										'class': 'cbi-input-text',
+ 										'id': 'columnWidths-input',
+-										'value': Object.entries(config.columnWidths).map(([k,v]) => k+':'+v).join(','),
+-										'style': 'width:100%; margin-bottom:10px;'
++										'value': Object.entries(config.columnWidths).map(([k,v]) => k+':'+v).join(',')
+ 									})
+ 								]),
+ 								E('div', {}, [
+ 									E('label', {}, _('Column Min Widths (format: name:minWidth,type:minWidth,...):')),
+ 									E('input', {
+ 										'type': 'text',
++										'class': 'cbi-input-text',
+ 										'id': 'columnMinWidths-input',
+-										'value': Object.entries(config.columnMinWidths).map(([k,v]) => k+':'+v).join(','),
+-										'style': 'width:100%; margin-bottom:10px;'
++										'value': Object.entries(config.columnMinWidths).map(([k,v]) => k+':'+v).join(',')
+ 									})
+ 								]),
+ 								E('div', {}, [
+ 									E('label', {}, _('Column Max Widths (format: name:maxWidth,type:maxWidth,...):')),
+ 									E('input', {
+ 										'type': 'text',
++										'class': 'cbi-input-text',
+ 										'id': 'columnMaxWidths-input',
+-										'value': Object.entries(config.columnMaxWidths).map(([k,v]) => k+':'+v).join(','),
+-										'style': 'width:100%; margin-bottom:10px;'
++										'value': Object.entries(config.columnMaxWidths).map(([k,v]) => k+':'+v).join(',')
+ 									})
+ 								]),
+ 								E('div', {}, [
+ 									E('label', {}, _('Padding:')),
+ 									E('input', {
+ 										'type': 'number',
++										'class': 'cbi-input-text',
+ 										'id': 'padding-input',
+-										'value': config.padding,
+-										'style': 'width:100%; margin-bottom:10px;'
++										'value': config.padding
+ 									})
+ 								]),
+ 								E('div', {}, [
+ 									E('label', {}, _('Padding Min:')),
+ 									E('input', {
+ 										'type': 'number',
++										'class': 'cbi-input-text',
+ 										'id': 'paddingMin-input',
+-										'value': config.paddingMin,
+-										'style': 'width:100%; margin-bottom:10px;'
++										'value': config.paddingMin
+ 									})
+ 								]),
+ 								E('div', {}, [
+ 									E('label', {}, _('Padding Max:')),
+ 									E('input', {
+ 										'type': 'number',
++										'class': 'cbi-input-text',
+ 										'id': 'paddingMax-input',
+-										'value': config.paddingMax,
+-										'style': 'width:100%; margin-bottom:10px;'
++										'value': config.paddingMax
+ 									})
+ 								]),
+ 								E('div', {}, [
+ 									E('label', {}, _('Current Directory:')),
+ 									E('input', {
+ 										'type': 'text',
++										'class': 'cbi-input-text',
+ 										'id': 'currentDirectory-input',
+-										'value': config.currentDirectory,
+-										'style': 'width:100%; margin-bottom:10px;'
++										'value': config.currentDirectory
+ 									})
+ 								]),
+ 								E('div', {
+@@ -1102,10 +1156,10 @@ return view.extend({
+ 			helpContent.style.display = (tab === 'help') ? 'block' : 'none';
+ 
+ 			// Update the active tab's styling
+-			tabFileManager.className = (tab === 'filemanager') ? 'cbi-tab cbi-tab-active' : 'cbi-tab';
+-			tabEditor.className = (tab === 'editor') ? 'cbi-tab cbi-tab-active' : 'cbi-tab';
+-			tabSettings.className = (tab === 'settings') ? 'cbi-tab cbi-tab-active' : 'cbi-tab';
+-			tabHelp.className = (tab === 'help') ? 'cbi-tab cbi-tab-active' : 'cbi-tab';
++			tabFileManager.className = (tab === 'filemanager') ? 'cbi-tab cbi-tab-active' : 'cbi-tab-disabled';
++			tabEditor.className = (tab === 'editor') ? 'cbi-tab cbi-tab-active' : 'cbi-tab-disabled';
++			tabSettings.className = (tab === 'settings') ? 'cbi-tab cbi-tab-active' : 'cbi-tab-disabled';
++			tabHelp.className = (tab === 'help') ? 'cbi-tab cbi-tab-active' : 'cbi-tab-disabled';
+ 
+ 			// Perform actions based on the selected tab
+ 			if (tab === 'filemanager') {
+@@ -1168,7 +1222,6 @@ return view.extend({
+ 			helpContent.style.height = '500px';
+ 			helpContent.style.resize = 'both';
+ 			helpContent.style.overflow = 'auto';
+-			helpContent.style.border = '1px solid #ccc';
+ 			helpContent.style.padding = '10px';
+ 			helpContent.style.boxSizing = 'border-box';
+ 
+@@ -1477,6 +1530,9 @@ return view.extend({
+ 		if (!btn) return;
+ 
+ 		btn.style.display = selectedItems.size > 0 ? '' : 'none';
++		const info = document.getElementById('status-info');
++		if (info)
++			info.textContent = selectedItems.size ? _('Selected') + ': ' + selectedItems.size : _('No file selected.');
+ 	},
+ 
+ 	// Update the "Select All" checkbox state
+@@ -2415,10 +2471,9 @@ return view.extend({
+ 			saveConfig().then(() => {
+ 				popTimeout(null, E('p', _('Settings uploaded successfully.')), 5000, 'info');
+ 				self.setInitialColumnWidths();
+-				const styleElement = document.querySelector('style');
+-				if (styleElement) {
+-					styleElement.textContent = styleElement.textContent.replace(/padding: \d+px/g, 'padding: ' + config.padding + 'px');
+-				}
++				const container = document.getElementById('file-manager-container');
++				if (container)
++					container.style.setProperty('--fm-action-padding', (Number(config.padding) || 10) + 'px');
+ 				currentPath = config.currentDirectory || '/';
+ 				const pathInput = document.getElementById('path-input');
+ 				if (pathInput) {
+@@ -2460,10 +2515,9 @@ return view.extend({
+ 	},
+ 
+ 	updateUI() {
+-		const styleElement = document.querySelector('style');
+-		if (styleElement) {
+-			styleElement.textContent = styleElement.textContent.replace(/padding: \d+px/g, `padding: ${config.padding}px`);
+-		}
++		const container = document.getElementById('file-manager-container');
++		if (container)
++			container.style.setProperty('--fm-action-padding', (Number(config.padding) || 10) + 'px');
+ 
+ 		const editorContainer = document.getElementById('editor-container');
+ 		if (editorContainer) {
+@@ -2506,7 +2560,7 @@ return view.extend({
+ 			const editorTextarea = E('textarea', {
+ 				'wrap': 'off',
+ 				'id': 'editor-textarea',
+-				'style': 'flex: 1; resize: none; border: none; padding: 0; margin: 0; overflow: auto;'
++				'style': 'flex: 1; resize: none; margin: 0; overflow: auto;'
+ 			}, [self.fileContent || '']);
+ 
+ 			// Append line numbers and textarea to the editor content container
+@@ -2559,6 +2613,15 @@ return view.extend({
+ 
+ 			self.hexEditorInstance = HE.initialize(hexeditContainer);
+ 
++			// Search controls have no behavioral dependency on their original style classes.
++			hexeditContainer.querySelectorAll('.hexedit-search-input').forEach(input => {
++				input.classList.replace('hexedit-search-input', 'cbi-input-text');
++			});
++			hexeditContainer.querySelectorAll('.hexedit-search-button').forEach(button => {
++				button.classList.replace('hexedit-search-button', 'cbi-button');
++				button.classList.add('btn');
++			});
++
+ 			// Load data into the HexEditor
+ 			self.hexEditorInstance.setData(self.fileData); // self.fileData is a Uint8Array
+ 
